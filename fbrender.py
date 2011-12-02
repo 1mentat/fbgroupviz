@@ -2,10 +2,10 @@ import settings
 import memberdb
 import codecs
 
-dotfile = codecs.open('fbgroup.dot', encoding='utf-8', mode='w+')
+dotfile = codecs.open('fbgroup.xml', encoding='utf-8', mode='w+')
 
 memberdb.setupdb()
 
-graph = memberdb.rendergraph()
+graph = memberdb.rendergml()
 
 dotfile.write(graph)

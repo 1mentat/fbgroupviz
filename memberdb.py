@@ -45,7 +45,7 @@ def addlink(sid, tid):
         print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
         print "Exception on link insert"
 
-def getmembers():
+def getmembersgv():
     members = unicode("")
     links = unicode("")
     try:
@@ -58,12 +58,40 @@ def getmembers():
         print "Unexpected error in getmembers():", sys.exc_info()[0], sys.exc_info()[1]
     return members + links
 
-def rendergraph() :
+def getmembersgml():
+    members = unicode("")
+    links = unicode("")
+    try:
+        c.execute("select * from members")
+        rows = c.fetchall()
+        for row in rows:
+            members += unicode("    <node id=\"{0}\"/>\n").format(row[0])
+            links += unicode("    <edge source=\"TNE\" target=\"{0}\"/>\n").format(row[0])
+    except:
+        print "Unexpected error in getmembers():", sys.exc_info()[0], sys.exc_info()[1]
+    return members + links
+
+def rendergv() :
     graph = ""
-    members = getmembers()
+    members = getmembersgv()
     graph += "digraph G {\n"
     graph += members
     graph += "}\n"
+
+    return graph
+
+def rendergml() :
+    graph = ""
+    members = getmembersgml()
+    graph += '''<?xml version="1.0" encoding="UTF-8"?>'''
+    graph += '''<graphml xmlns="http://graphml.graphdrawing.org/xmlns"'''
+    graph += '''    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'''
+    graph += '''    xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns'''
+    graph += '''    http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">'''
+    graph += '''<graph id="G" edgedefault="undirected">'''
+    graph += members
+    graph += '''</graph>'''
+    graph += '''</graphml>'''
 
     return graph
 
