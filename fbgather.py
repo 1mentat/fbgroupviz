@@ -5,8 +5,8 @@ import time
 
 import json, urllib2
 
-membersurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'members' + settings.fb_oauth_token
-groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + settings.fb_oauth_token
+membersurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'members' + '?' + settings.fb_oauth_token
+groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + '?' + settings.fb_oauth_token
 
 memberdb.setupdb()
 graphdb.setup_db()
