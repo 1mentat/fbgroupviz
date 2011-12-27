@@ -7,9 +7,11 @@ import codecs
 import json, urllib2
 
 def feed2wiki(doc):
-    postdoc = ''
-
     for post in doc['data']:
+        postdoc = ''
+        f = codecs.open('posts/{0}.post'.format(post['id']), encoding='utf-8', mode='w+')
+        postdoc += headingdocmode
+        postdoc += headingthreadmode
         postdoc += heading1
         postdoc += "Post"
         postdoc += heading1 + '\n'
@@ -28,6 +30,9 @@ def feed2wiki(doc):
         except KeyError:
             postdoc += 'No link\n'
 
+        f.write(postdoc)
+        f.close()
+
     return postdoc
 
 feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?' + settings.fb_oauth_token
@@ -36,21 +41,16 @@ groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + '?' + settings.f
 #memberdb.setupdb()
 #graphdb.setup_db()
 
-f = codecs.open('{0}.feed'.format(settings.fb_group_id), encoding='utf-8', mode='w+')
-
-postdoc=""
-heading1 = "===== "
-heading2 = "==== "
+headingdocmode = '===== Document Mode =====\n'
+headingthreadmode = '===== Thread Mode =====\n'
+heading1 = "==== "
+heading2 = "=== "
 
 doc = json.loads(urllib2.urlopen(feedurl).read())
 next = doc['paging']['next']
 
-postdoc += feed2wiki(doc)
+feed2wiki(doc)
 
 doc = json.loads(urllib2.urlopen(next).read())
 
-postdoc += feed2wiki(doc)
-
-f.write(postdoc)
-f.close()
-
+feed2wiki(doc)
