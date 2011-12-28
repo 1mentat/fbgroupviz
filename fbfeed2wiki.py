@@ -21,9 +21,10 @@ def feed2wiki(doc):
             postdoc += "From: " + post['from']['name']
         except KeyError:
             postdoc += 'From: Unknown'
-        postdoc += heading2 + '\n'
+        postdoc += heading2 + '\n\n'
         try:
-            postdoc += '<file>' + post['message'] + '</file>' + '\n'
+            #postdoc += '<file>' + post['message'] + '</file>' + '\n'
+            postdoc += post['message'] + '\n\n'
         except KeyError:
             postdoc += 'No message\n\n'
         try:
