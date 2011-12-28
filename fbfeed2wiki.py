@@ -3,12 +3,13 @@ import settings
 #import graphdb
 import time
 import codecs
+import dokuwiki
 
 import json, urllib2
 
 def feed2wiki(doc):
     for post in doc['data']:
-        postdoc = ''
+        postdoc = unicode('')
         f = codecs.open('posts/{0}.post'.format(post['id']), encoding='utf-8', mode='w+')
         postdoc += headingdocmode
         postdoc += headingthreadmode
@@ -29,6 +30,8 @@ def feed2wiki(doc):
             postdoc += 'Link: [[' + post['link'] + ']]\n\n'
         except KeyError:
             postdoc += 'No link\n'
+
+        dokuwiki.changepage(post['id'],postdoc.encode('utf-8'))
 
         f.write(postdoc)
         f.close()
