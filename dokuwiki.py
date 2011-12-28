@@ -5,6 +5,7 @@ import mechanize
 import cookielib
 from BeautifulSoup import BeautifulSoup
 import html2text
+import re
 
 def isEditForm(f):
     try:
@@ -35,10 +36,16 @@ def changepage(pagename,newtext):
 
     data = urllib.urlencode(values)
 
+    getdoc = re.compile('(===== Document Mode =====)(.*)(===== Thread Mode =====)(.*)', re.S)
+
     br.open(url,data)
     br.select_form(predicate=isEditForm)
-    br.form['wikitext'] = newtext
+    result = getdoc.match(br.form['wikitext'])
+    if result != None:
+        br.form['wikitext'] = '===== Document Mode =====' + result.group(2) + newtext
+    else:
+        br.form['wikitext'] = '===== Document Mode =====' + '\n\n' + newtext
     br.submit()
 
 if __name__ == '__main__':
-    newchangepage('test','testing')
+    changepage('test','===== Thread Mode =====\n\ntesting\n\n')

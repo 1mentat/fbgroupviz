@@ -11,7 +11,6 @@ def feed2wiki(doc):
     for post in doc['data']:
         postdoc = unicode('')
         f = codecs.open('posts/{0}.post'.format(post['id']), encoding='utf-8', mode='w+')
-        postdoc += headingdocmode
         postdoc += headingthreadmode
         postdoc += heading2
         try:
@@ -54,7 +53,6 @@ groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + '?' + settings.f
 #memberdb.setupdb()
 #graphdb.setup_db()
 
-headingdocmode = '===== Document Mode =====\n'
 headingthreadmode = '===== Thread Mode =====\n'
 heading1 = "==== "
 heading2 = "=== "
