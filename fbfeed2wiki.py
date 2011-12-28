@@ -13,24 +13,33 @@ def feed2wiki(doc):
         f = codecs.open('posts/{0}.post'.format(post['id']), encoding='utf-8', mode='w+')
         postdoc += headingdocmode
         postdoc += headingthreadmode
-        postdoc += heading1
-        postdoc += "Post"
-        postdoc += heading1 + '\n'
         postdoc += heading2
         try:
-            postdoc += "From: " + post['from']['name']
+            postdoc += post['from']['name']
         except KeyError:
-            postdoc += 'From: Unknown'
+            postdoc += 'Unknown'
         postdoc += heading2 + '\n\n'
+
         try:
-            #postdoc += '<file>' + post['message'] + '</file>' + '\n'
             postdoc += post['message'] + '\n\n'
         except KeyError:
             postdoc += 'No message\n\n'
         try:
             postdoc += 'Link: [[' + post['link'] + ']]\n\n'
         except KeyError:
-            postdoc += 'No link\n'
+            pass
+        try:
+            postdoc += '{{' + post['picture'] + ' }}\n\n'
+        except KeyError:
+            pass
+
+        try:
+            for comment in post['comments']['data']:
+                postdoc += heading3 + comment['from']['name'] + heading3 + '\n\n'
+                postdoc += comment['message'] + '\n\n'
+        except KeyError:
+            postdoc += 'No Comments\n\n'
+            
 
         dokuwiki.changepage(post['id'],postdoc.encode('utf-8'))
 
@@ -49,6 +58,7 @@ headingdocmode = '===== Document Mode =====\n'
 headingthreadmode = '===== Thread Mode =====\n'
 heading1 = "==== "
 heading2 = "=== "
+heading3 = "== "
 
 doc = json.loads(urllib2.urlopen(feedurl).read())
 next = doc['paging']['next']
