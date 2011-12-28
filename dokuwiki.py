@@ -5,11 +5,17 @@ import settings
 from HTMLParser import HTMLParser
 
 forms = {}
-
 class MyHTMLParser(HTMLParser):
+    def __init__(self):
+        self.capturetext = 0
+        self.reset()
+
     def handle_starttag(self, tag, attrs):
         global forms
         try:
+            if tag == 'textarea':
+                if attrs[0][1] == 'wikitext':
+                    self.capturetext = 1
             if attrs[1][0] == 'name':
                 if attrs[1][1] == 'sectok':
                     forms['sectok'] = attrs[2][1]
@@ -18,10 +24,14 @@ class MyHTMLParser(HTMLParser):
                     forms['changecheck'] = attrs[2][1]
         except IndexError:
             pass
-#    def handle_endtag(self, tag):
+    def handle_endtag(self, tag):
+        if self.capturetext == 1:
+            if tag == 'textarea':
+                self.capturetext = 0
 #        print "Encountered an end tag:",tag
-#    def handle_data(self, data):
-#        print "Encountered data:",data
+    def handle_data(self, data):
+        if self.capturetext == 1:
+            forms['wikitext'] = data
 
 def changepage(pagename,newtext):
     values = {}
