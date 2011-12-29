@@ -1,16 +1,13 @@
 import settings
-#import memberdb
-#import graphdb
 import time
 import codecs
 import dokuwiki
 
 import json, urllib2
 
-def feed2wiki(doc):
+def feed2wiki(cj,doc):
     for post in doc['data']:
         postdoc = unicode('')
-        f = codecs.open('posts/{0}.post'.format(post['id']), encoding='utf-8', mode='w+')
         postdoc += headingthreadmode
         postdoc += heading2
         try:
@@ -38,31 +35,24 @@ def feed2wiki(doc):
                 postdoc += comment['message'] + '\n\n'
         except KeyError:
             postdoc += 'No Comments\n\n'
-            
 
-        dokuwiki.changepage(post['id'],postdoc.encode('utf-8'))
-
-        f.write(postdoc)
-        f.close()
-
-    return postdoc
+        dokuwiki.changepage(cj,settings.wiki_prefix + post['id'],postdoc.encode('utf-8'))
 
 feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?' + settings.fb_oauth_token
 groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + '?' + settings.fb_oauth_token
-
-#memberdb.setupdb()
-#graphdb.setup_db()
 
 headingthreadmode = '===== Thread Mode =====\n'
 heading1 = "==== "
 heading2 = "=== "
 heading3 = "== "
 
+cj = dokuwiki.login(settings.wiki_user,settings.wiki_pw)
+
 doc = json.loads(urllib2.urlopen(feedurl).read())
 next = doc['paging']['next']
 
-feed2wiki(doc)
+feed2wiki(cj,doc)
 
 doc = json.loads(urllib2.urlopen(next).read())
 
-feed2wiki(doc)
+feed2wiki(cj,doc)
