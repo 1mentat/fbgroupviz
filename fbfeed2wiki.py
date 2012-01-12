@@ -30,9 +30,30 @@ def feed2wiki(cj,doc):
             pass
 
         try:
-            for comment in post['comments']['data']:
-                postdoc += heading3 + comment['from']['name'] + heading3 + '\n\n'
-                postdoc += comment['message'] + '\n\n'
+            postdoc += 'Likes : '
+            if len(post['likes']['data']) < post['likes']['count']:
+                likeurl = settings.fb_graph_url + '/' + post['id'] + '/' + 'likes' + '?' + settings.fb_oauth_token + '&' + 'limit={0}'.format(post['likes']['count'])
+                likereq = json.loads(urllib2.urlopen(likeurl).read())
+                for like in likereq['data']:
+                    postdoc += like['name'] + ', '
+            else:
+                for like in post['likes']['data']:
+                    postdoc += like['name'] + ', '
+            postdoc += '\n\n'
+        except KeyError:
+            postdoc += 'None\n\n'
+
+        try:
+            if len(post['comments']['data']) < post['comments']['count']:
+                commenturl = settings.fb_graph_url + '/' + post['id'] + '/' + 'comments' + '?' + settings.fb_oauth_token + '&' + 'limit={0}'.format(post['comments']['count'])
+                commentreq = json.loads(urllib2.urlopen(commenturl).read())
+                for comment in commentreq['data']:
+                    postdoc += heading3 + comment['from']['name'] + heading3 + '\n\n'
+                    postdoc += comment['message'] + '\n\n'
+            else:
+                for comment in post['comments']['data']:
+                    postdoc += heading3 + comment['from']['name'] + heading3 + '\n\n'
+                    postdoc += comment['message'] + '\n\n'
         except KeyError:
             postdoc += 'No Comments\n\n'
 
