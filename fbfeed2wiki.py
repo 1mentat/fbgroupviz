@@ -8,13 +8,13 @@ import json, urllib2
 def feed2wiki(cj,doc):
     for post in doc['data']:
         postdoc = unicode('')
-        postdoc += headingthreadmode
-        postdoc += heading2
+        postdoc += wiki.headingthreadmode
+        postdoc += wiki.heading2
         try:
             postdoc += post['from']['name']
         except KeyError:
             postdoc += 'Unknown'
-        postdoc += heading2 + '\n\n'
+        postdoc += wiki.heading2 + '\n\n'
 
         try:
             postdoc += post['message'] + '\n\n'
@@ -48,11 +48,11 @@ def feed2wiki(cj,doc):
                 commenturl = settings.fb_graph_url + '/' + post['id'] + '/' + 'comments' + '?' + settings.fb_oauth_token + '&' + 'limit={0}'.format(post['comments']['count'])
                 commentreq = json.loads(urllib2.urlopen(commenturl).read())
                 for comment in commentreq['data']:
-                    postdoc += heading3 + comment['from']['name'] + heading3 + '\n\n'
+                    postdoc += wiki.heading3 + comment['from']['name'] + wiki.heading3 + '\n\n'
                     postdoc += comment['message'] + '\n\n'
             else:
                 for comment in post['comments']['data']:
-                    postdoc += heading3 + comment['from']['name'] + heading3 + '\n\n'
+                    postdoc += wiki.heading3 + comment['from']['name'] + wiki.heading3 + '\n\n'
                     postdoc += comment['message'] + '\n\n'
         except KeyError:
             postdoc += 'No Comments\n\n'
@@ -62,10 +62,6 @@ def feed2wiki(cj,doc):
 feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?' + settings.fb_oauth_token
 groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + '?' + settings.fb_oauth_token
 
-headingthreadmode = '===== Thread Mode =====\n'
-heading1 = "==== "
-heading2 = "=== "
-heading3 = "== "
 
 cj = wiki.login(settings.wiki_user,settings.wiki_pw)
 

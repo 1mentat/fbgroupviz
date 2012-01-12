@@ -85,6 +85,11 @@ def login(username,password):
     
     return cj
 
+headingthreadmode = '===== Thread Mode =====\n'
+heading1 = "==== "
+heading2 = "=== "
+heading3 = "== "
+
 if __name__ == '__main__':
     cj = login(settings.wiki_user,settings.wiki_pw)
     changepage(cj,'test','===== Thread Mode =====\n\ntesting\n\n')
