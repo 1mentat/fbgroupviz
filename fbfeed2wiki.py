@@ -1,7 +1,7 @@
 import settings
 import time
 import codecs
-import dokuwiki
+import dokuwiki as wiki
 
 import json, urllib2
 
@@ -57,7 +57,7 @@ def feed2wiki(cj,doc):
         except KeyError:
             postdoc += 'No Comments\n\n'
 
-        dokuwiki.changepage(cj,settings.wiki_prefix + post['id'],postdoc.encode('utf-8'))
+        wiki.changepage(cj,settings.wiki_prefix + post['id'],postdoc.encode('utf-8'))
 
 feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?' + settings.fb_oauth_token
 groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + '?' + settings.fb_oauth_token
@@ -67,7 +67,7 @@ heading1 = "==== "
 heading2 = "=== "
 heading3 = "== "
 
-cj = dokuwiki.login(settings.wiki_user,settings.wiki_pw)
+cj = wiki.login(settings.wiki_user,settings.wiki_pw)
 
 doc = json.loads(urllib2.urlopen(feedurl).read())
 next = doc['paging']['next']
