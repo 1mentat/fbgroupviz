@@ -5,3 +5,4 @@ wiki_url = 'http://<site>/<?path>/doku.php'
 wiki_user = '<user>'
 wiki_pw = '<password>'
 wiki_prefix = '<group>Feed_'
+feed_pages = 1

@@ -1,6 +1,7 @@
 import settings
 import time
 import codecs
+import argparse
 import dokuwiki as wiki
 
 import json, urllib2
@@ -62,14 +63,24 @@ def feed2wiki(cj,doc):
 feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?' + settings.fb_oauth_token
 groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + '?' + settings.fb_oauth_token
 
+parser = argparse.ArgumentParser(description='Options')
+parser.add_argument('-p', '--pages', dest='feed_pages', type=int, default=settings.feed_pages)
+
+args = parser.parse_args()
+
+print 'Mirroring {0} pages'.format(args.feed_pages)
 
 cj = wiki.login(settings.wiki_user,settings.wiki_pw)
 
-doc = json.loads(urllib2.urlopen(feedurl).read())
-next = doc['paging']['next']
+next = feedurl
+pagecount = 0
 
-feed2wiki(cj,doc)
-
-doc = json.loads(urllib2.urlopen(next).read())
-
-feed2wiki(cj,doc)
+while True:
+    #this probably doesn't handle next returning 'data' that's empty well
+    doc = json.loads(urllib2.urlopen(next).read())
+    next = doc['paging']['next']
+    feed2wiki(cj,doc)
+    pagecount += 1
+    print 'Processed page {0}'.format(pagecount)
+    if pagecount >= args.feed_pages:
+        break
