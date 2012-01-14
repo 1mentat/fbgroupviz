@@ -1,5 +1,6 @@
 fb_oauth_token = 'access_token=<oauthtoken>'
 fb_group_id = '<groupid>'
+fb_person_id = '<userid or "me">'
 fb_graph_url = 'https://graph.facebook.com'
 wiki_url = 'http://<site>/<?path>/doku.php'
 wiki_user = '<user>'
