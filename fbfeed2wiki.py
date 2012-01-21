@@ -7,6 +7,7 @@ import dokuwiki as wiki
 import json, urllib2
 
 def feed2wiki(cj,doc):
+    ididx = []
     for post in doc['data']:
         postdoc = unicode('')
         postdoc += wiki.headingthreadmode
@@ -60,6 +61,9 @@ def feed2wiki(cj,doc):
 
         wiki.changepage(cj,settings.wiki_prefix + post['id'],postdoc.encode('utf-8'))
 
+        ididx.append(post['id'])
+    return ididx
+
 feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?' + settings.fb_oauth_token
 groupurl = settings.fb_graph_url + '/' + settings.fb_group_id + '?' + settings.fb_oauth_token
 
@@ -75,12 +79,21 @@ cj = wiki.login(settings.wiki_user,settings.wiki_pw)
 next = feedurl
 pagecount = 0
 
+ididx = []
+
 while True:
     #this probably doesn't handle next returning 'data' that's empty well
     doc = json.loads(urllib2.urlopen(next).read())
     next = doc['paging']['next']
-    feed2wiki(cj,doc)
+    ididx.extend(feed2wiki(cj,doc))
     pagecount += 1
     print 'Processed page {0}'.format(pagecount)
     if pagecount >= args.feed_pages:
         break
+
+indexdoc = unicode('')
+indexdoc += wiki.headingthreadmode
+indexdoc += wiki.heading2 + settings.wiki_prefix + ' Index' + wiki.heading2 + '\n\n'
+for id in ididx:
+    indexdoc += '[[' + settings.wiki_prefix + id + ']]\n\n'
+wiki.changepage(cj,settings.wiki_prefix,indexdoc.encode('utf-8'))
