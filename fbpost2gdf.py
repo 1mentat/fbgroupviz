@@ -14,7 +14,7 @@ def post2gdf(doc):
     edgedoc += 'edgedef> node1 VARCHAR,node2 VARCHAR,weight DOUBLE\n'
     try:
         nodedoc += '{0},{1},{2}\n'.format('id_' + doc['id'],'post','post')
-        edgedoc += '{0},{1},{2}\n'.format('id_' + doc['id'],'id_' + doc['from']['id'],'.1')
+        edgedoc += '{0},{1},{2}\n'.format('id_' + doc['from']['id'],'id_' + doc['id'],'.8')
         people[doc['from']['id']] = doc['from']['name']
     except KeyError:
         nodedoc += '{0},{1},{2}\n'.format('Unknown','post','post')
@@ -41,13 +41,32 @@ def post2gdf(doc):
                 people[comment['from']['id']] = comment['from']['name']
                 nodedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'c','comment')
                 edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + doc['id'],'.6')
-                edgedoc += '{0},{1},{2}\n'.format('id_' + comment['from']['id'],'id_' + comment['id'],'.3')
+                edgedoc += '{0},{1},{2}\n'.format('id_' + comment['from']['id'],'id_' + comment['id'],'.8')
+#                try:
+#                    if comment['likes']:
+#                        likeurl = settings.fb_graph_url + '/' + comment['id'] + '/' + 'likes' + '?' + settings.fb_oauth_token + '&' + 'limit={0}'.format(comment['likes'])
+#                        likereq = json.loads(urllib2.urlopen(likeurl).read())
+#                        for like in likereq['data']:
+#                            people[like['id']] = like['name']
+#                            edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + comment['id'],'.3')
+#                except KeyError:
+#                    pass
         else:
             for comment in doc['comments']['data']:
                 people[comment['from']['id']] = comment['from']['name']
                 nodedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'c','comment')
                 edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + doc['id'],'.6')
-                edgedoc += '{0},{1},{2}\n'.format('id_' + comment['from']['id'],'id_' + comment['id'],'.3')
+                edgedoc += '{0},{1},{2}\n'.format('id_' + comment['from']['id'],'id_' + comment['id'],'.8')
+#                try:
+#                    if comment['likes']:
+#                        likeurl = settings.fb_graph_url + '/' + comment['id'] + '/' + 'likes' + '?' + settings.fb_oauth_token + '&' + 'limit={0}'.format(comment['likes'])
+#                        likereq = json.loads(urllib2.urlopen(likeurl).read())
+#                        for like in likereq['data']:
+#                            people[like['id']] = like['name']
+#                            print like['name']
+#                            edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + comment['id'],'.3')
+#                except KeyError:
+#                    pass
     except KeyError:
         pass
 
