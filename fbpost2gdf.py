@@ -51,6 +51,12 @@ def post2gdf(doc):
 #                            edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + comment['id'],'.3')
 #                except KeyError:
 #                    pass
+                try:
+                    for tag in comment['message_tags']:
+                        people[tag['id']] = tag['name']
+                        edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + tag['id'],'.3')
+                except KeyError:
+                    pass
         else:
             for comment in doc['comments']['data']:
                 people[comment['from']['id']] = comment['from']['name']
@@ -67,6 +73,12 @@ def post2gdf(doc):
 #                            edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + comment['id'],'.3')
 #                except KeyError:
 #                    pass
+                try:
+                    for tag in comment['message_tags']:
+                        people[tag['id']] = tag['name']
+                        edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + tag['id'],'.3')
+                except KeyError:
+                    pass
     except KeyError:
         pass
 
