@@ -10,14 +10,19 @@ def post2gdf(doc):
     nodedoc = unicode('')
     edgedoc = unicode('')
     people = dict()
-    nodedoc += 'nodedef> name VARCHAR,label VARCHAR,type VARCHAR\n'
+    nodedoc += 'nodedef> name VARCHAR,label VARCHAR,type VARCHAR, likes INT\n'
     edgedoc += 'edgedef> node1 VARCHAR,node2 VARCHAR,weight DOUBLE\n'
     try:
-        nodedoc += '{0},{1},{2}\n'.format('id_' + doc['id'],'post','post')
+        likes = '0'
+        try:
+            likes = doc['likes']['count']
+        except KeyError:
+            pass
+        nodedoc += '{0},{1},{2},{3}\n'.format('id_' + doc['id'],'post','post',likes)
         edgedoc += '{0},{1},{2}\n'.format('id_' + doc['from']['id'],'id_' + doc['id'],'.8')
         people[doc['from']['id']] = doc['from']['name']
     except KeyError:
-        nodedoc += '{0},{1},{2}\n'.format('Unknown','post','post')
+        nodedoc += '{0},{1},{2},{3}\n'.format('Unknown','post','post','0')
 
     try:
         if len(doc['likes']['data']) < doc['likes']['count']:
@@ -39,18 +44,14 @@ def post2gdf(doc):
             commentreq = json.loads(urllib2.urlopen(commenturl).read())
             for comment in commentreq['data']:
                 people[comment['from']['id']] = comment['from']['name']
-                nodedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'c','comment')
+                likes = '0'
+                try:
+                    likes = comment['likes']
+                except KeyError:
+                    pass
+                nodedoc += '{0},{1},{2},{3}\n'.format('id_' + comment['id'],'c','comment',likes)
                 edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + doc['id'],'.6')
                 edgedoc += '{0},{1},{2}\n'.format('id_' + comment['from']['id'],'id_' + comment['id'],'.8')
-#                try:
-#                    if comment['likes']:
-#                        likeurl = settings.fb_graph_url + '/' + comment['id'] + '/' + 'likes' + '?' + settings.fb_oauth_token + '&' + 'limit={0}'.format(comment['likes'])
-#                        likereq = json.loads(urllib2.urlopen(likeurl).read())
-#                        for like in likereq['data']:
-#                            people[like['id']] = like['name']
-#                            edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + comment['id'],'.3')
-#                except KeyError:
-#                    pass
                 try:
                     for tag in comment['message_tags']:
                         people[tag['id']] = tag['name']
@@ -60,19 +61,14 @@ def post2gdf(doc):
         else:
             for comment in doc['comments']['data']:
                 people[comment['from']['id']] = comment['from']['name']
-                nodedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'c','comment')
+                likes = '0'
+                try:
+                    likes = comment['likes']
+                except KeyError:
+                    pass
+                nodedoc += '{0},{1},{2},{3}\n'.format('id_' + comment['id'],'c','comment',likes)
                 edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + doc['id'],'.6')
                 edgedoc += '{0},{1},{2}\n'.format('id_' + comment['from']['id'],'id_' + comment['id'],'.8')
-#                try:
-#                    if comment['likes']:
-#                        likeurl = settings.fb_graph_url + '/' + comment['id'] + '/' + 'likes' + '?' + settings.fb_oauth_token + '&' + 'limit={0}'.format(comment['likes'])
-#                        likereq = json.loads(urllib2.urlopen(likeurl).read())
-#                        for like in likereq['data']:
-#                            people[like['id']] = like['name']
-#                            print like['name']
-#                            edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + comment['id'],'.3')
-#                except KeyError:
-#                    pass
                 try:
                     for tag in comment['message_tags']:
                         people[tag['id']] = tag['name']
@@ -83,7 +79,7 @@ def post2gdf(doc):
         pass
 
     for id in people.keys():
-        nodedoc += u'{0},{1},{2}\n'.format('id_' + id, people[id],'person')
+        nodedoc += u'{0},{1},{2},{3}\n'.format('id_' + id, people[id],'person','0')
 
     return nodedoc, edgedoc
 
