@@ -10,6 +10,11 @@ class PostGDF:
     nodedoc = unicode('')
     edgedoc = unicode('')
     people = dict()
+    pst2pstrW = '.3'
+    psn2cmntW = '.5'
+    psn2postW = '.5'
+    tag2psnW = '.5'
+    cmnt2postW = '1'
 
     def dopost(self):
         try:
@@ -19,7 +24,7 @@ class PostGDF:
             except KeyError:
                 pass
             self.nodedoc += '{0},{1},{2},{3}\n'.format('id_' + self.doc['id'],'post','post',likes)
-            self.edgedoc += '{0},{1},{2}\n'.format('id_' + self.doc['from']['id'],'id_' + self.doc['id'],'.8')
+            self.edgedoc += '{0},{1},{2}\n'.format('id_' + self.doc['from']['id'],'id_' + self.doc['id'],self.pst2pstrW)
             self.people[self.doc['from']['id']] = self.doc['from']['name']
         except KeyError:
             self.nodedoc += '{0},{1},{2},{3}\n'.format('Unknown','post','post','0')
@@ -31,11 +36,11 @@ class PostGDF:
                 likereq = json.loads(urllib2.urlopen(likeurl).read())
                 for like in likereq['data']:
                     self.people[like['id']] = like['name']
-                    self.edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + self.doc['id'],'.3')
+                    self.edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + self.doc['id'],self.psn2postW)
             else:
                 for like in self.doc['likes']['data']:
                     self.people[like['id']] = like['name']
-                    self.edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + self.doc['id'],'.3')
+                    self.edgedoc += '{0},{1},{2}\n'.format('id_' + like['id'],'id_' + self.doc['id'],self.psn2postW)
         except KeyError:
             pass
 
@@ -47,12 +52,12 @@ class PostGDF:
         except KeyError:
             pass
         self.nodedoc += '{0},{1},{2},{3}\n'.format('id_' + comment['id'],'c','comment',likes)
-        self.edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + self.doc['id'],'.6')
-        self.edgedoc += '{0},{1},{2}\n'.format('id_' + comment['from']['id'],'id_' + comment['id'],'.8')
+        self.edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + self.doc['id'],self.cmnt2postW)
+        self.edgedoc += '{0},{1},{2}\n'.format('id_' + comment['from']['id'],'id_' + comment['id'],self.psn2cmntW)
         try:
             for tag in comment['message_tags']:
                 self.people[tag['id']] = tag['name']
-                self.edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + tag['id'],'.3')
+                self.edgedoc += '{0},{1},{2}\n'.format('id_' + comment['id'],'id_' + tag['id'],self.tag2psnW)
         except KeyError:
             pass
 
@@ -84,23 +89,32 @@ class PostGDF:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Options')
-    parser.add_argument('-p', '--post', dest='post_id', default=settings.fb_post_id)
+    parser.add_argument('-p', '--post', dest='post_ids', action='append', default=[])
+    parser.add_argument('-o', '--output', dest='output', default='post')
 
     args = parser.parse_args()
 
-    posturl = settings.fb_graph_url + '/' + args.post_id + '/' + '?' + settings.fb_oauth_token
+    if args.post_ids == []:
+        args.post_ids = settings.fb_post_id
 
-    doc = json.loads(urllib2.urlopen(posturl).read())
+    print args.post_ids
 
     thepost = PostGDF()
 
-    thepost.addPost(doc)
+    for post_id in args.post_ids:
+        print 'Processing post id {0}'.format(post_id)
 
-    thepost.render()
+        posturl = settings.fb_graph_url + '/' + post_id + '/' + '?' + settings.fb_oauth_token
+
+        doc = json.loads(urllib2.urlopen(posturl).read())
+
+        thepost.addPost(doc)
+
+        thepost.render()
 
     for id in thepost.people.keys():
         thepost.nodedoc += u'{0},{1},{2},{3}\n'.format('id_' + id, thepost.people[id],'person','0')
 
-    f = codecs.open(args.post_id + '.gdf', encoding='utf-8', mode='w+')
+    f = codecs.open(args.output + '.gdf', encoding='utf-8', mode='w+')
     f.write(thepost.nodedoc)
     f.write(thepost.edgedoc)
