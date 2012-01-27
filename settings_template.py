@@ -8,3 +8,5 @@ wiki_user = '<user>'
 wiki_pw = '<password>'
 wiki_prefix = '<group>Feed_'
 feed_pages = 1
+
+bookmark_format = 'ns'

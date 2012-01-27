@@ -6,6 +6,31 @@ import re
 
 import json, urllib2
 
+def nsbmkhdr():
+    hdr = u''
+    hdr += '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n'
+    hdr += '<!-- This is an automatically generated file.\n'
+    hdr += '     It will be read and overwritten.\n'
+    hdr += '     DO NOT EDIT! -->\n'
+    hdr += '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n'
+    hdr += '<TITLE>Bookmarks</TITLE>\n'
+    hdr += '<H1>Bookmarks</H1>\n'
+    hdr += '<DL><p>\n'
+    hdr += '    <DT><H3 ADD_DATE="1323724657" LAST_MODIFIED="1323724657">TNE</H3>\n'
+    hdr += '    <DL><p>\n'
+
+    return hdr
+
+def link2nsbmk(link):
+    return u'        <DT><A HREF="{0}" ADD_DATE="1323724657">{1}</A>\n'.format(link,link)
+
+def nsbmkftr():
+    ftr = u''
+    ftr = '    </DL><p>\n'
+    ftr = '</DL><p>\n'
+
+    return ftr
+
 def feedlinks(doc):
     links = []
     urlre = re.compile("http\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(/\S*)?")
@@ -46,6 +71,7 @@ feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?
 
 parser = argparse.ArgumentParser(description='Options')
 parser.add_argument('-p', '--pages', dest='feed_pages', type=int, default=settings.feed_pages)
+parser.add_argument('-f', '--format', dest='format', default=settings.bookmark_format)
 
 args = parser.parse_args()
 
@@ -53,8 +79,6 @@ print 'Dumping links from {0} pages'.format(args.feed_pages)
 
 next = feedurl
 pagecount = 0
-
-
 
 links = []
 
@@ -73,7 +97,23 @@ while True:
 
 ulinks = set(links)
 
-f = codecs.open(settings.fb_group_id + '.links', encoding='utf-8', mode='w+')
+if args.format == 'ns':
+    type = '.html'
+else:
+    type = '.txt'
+
+f = codecs.open(settings.fb_group_id + type, encoding='utf-8', mode='w+')
+
+if args.format == 'ns':
+    f.write(nsbmkhdr())
 
 for link in ulinks:
-    f.write(link + '\n')
+    if args.format == 'ns':
+        f.write(link2nsbmk(link))
+    else:
+        f.write(link + '\n')
+
+if args.format == 'ns':
+    f.write(nsbmkftr())
+
+f.close()
