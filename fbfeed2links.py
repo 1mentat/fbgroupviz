@@ -6,7 +6,7 @@ import re
 
 import json, urllib2
 
-def nsbmkhdr():
+def nsbmkhdr(name):
     hdr = u''
     hdr += '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n'
     hdr += '<!-- This is an automatically generated file.\n'
@@ -16,7 +16,7 @@ def nsbmkhdr():
     hdr += '<TITLE>Bookmarks</TITLE>\n'
     hdr += '<H1>Bookmarks</H1>\n'
     hdr += '<DL><p>\n'
-    hdr += '    <DT><H3 ADD_DATE="1323724657" LAST_MODIFIED="1323724657">TNE</H3>\n'
+    hdr += '    <DT><H3 ADD_DATE="1323724657" LAST_MODIFIED="1323724657">{0}</H3>\n'.format(name)
     hdr += '    <DL><p>\n'
 
     return hdr
@@ -72,6 +72,7 @@ feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?
 parser = argparse.ArgumentParser(description='Options')
 parser.add_argument('-p', '--pages', dest='feed_pages', type=int, default=settings.feed_pages)
 parser.add_argument('-f', '--format', dest='format', default=settings.bookmark_format)
+parser.add_argument('-n', '--name', dest='name', default=settings.bookmark_title)
 
 args = parser.parse_args()
 
@@ -105,7 +106,7 @@ else:
 f = codecs.open(settings.fb_group_id + type, encoding='utf-8', mode='w+')
 
 if args.format == 'ns':
-    f.write(nsbmkhdr())
+    f.write(nsbmkhdr(args.name))
 
 for link in ulinks:
     if args.format == 'ns':
