@@ -21,10 +21,6 @@ def feedlinks(doc):
             links.append(post['link'])
         except KeyError:
             pass
-        try:
-            links.append(post['picture'])
-        except KeyError:
-            pass
 
         try:
             if len(post['comments']['data']) < post['comments']['count']:
@@ -58,17 +54,26 @@ print 'Dumping links from {0} pages'.format(args.feed_pages)
 next = feedurl
 pagecount = 0
 
+
+
 links = []
 
 while True:
     #this probably doesn't handle next returning 'data' that's empty well
     doc = json.loads(urllib2.urlopen(next).read())
-    next = doc['paging']['next']
+    try:
+        next = doc['paging']['next']
+    except KeyError:
+        break
     links.extend(feedlinks(doc))
     pagecount += 1
     print 'Processed page {0}'.format(pagecount)
     if pagecount >= args.feed_pages:
         break
 
-for link in links:
-    print link
+ulinks = set(links)
+
+f = codecs.open(settings.fb_group_id + '.links', encoding='utf-8', mode='w+')
+
+for link in ulinks:
+    f.write(link + '\n')
