@@ -6,6 +6,38 @@ import re
 
 import json, urllib2
 
+import sqlite3
+import sys
+
+conn = None
+c = None
+
+def setupdb() :
+    global conn
+    global c
+
+    conn = sqlite3.connect('link.db')
+
+    c = conn.cursor()
+
+def addgroup(id):
+    #XXX injection problem potentially
+    try:
+        c.execute('''create table if not exists fbgroup_''' + id + '''  (url varchar, likes integer, unique(url))''')
+        conn.commit()
+    except:
+        print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
+        print "Exception on create links"
+
+
+def addlink(id, url, likes):
+    try:
+        c.execute("insert or ignore into fbgroup_" + id + " values (?, ?)", (url, likes))
+        conn.commit()
+    except:
+        print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
+        print "Exception on member insert"
+
 def nsbmkhdr(name):
     hdr = u''
     hdr += '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n'
@@ -31,18 +63,22 @@ def nsbmkftr():
 
     return ftr
 
-def feedlinks(doc):
+def feedlinks(doc, groupid):
     links = []
     urlre = re.compile("http\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(/\S*)?")
     for post in doc['data']:
+        #date = time.strptime(post['updated_time'], '%Y-%m-%dT%H:%M:%S+0000')
+        #print date
         try:
             matches = urlre.finditer(post['message'])
             if matches:
                 for match in matches:
+                    addlink(groupid,match.group(0),0)
                     links.append(match.group(0))
         except KeyError:
             pass
         try:
+            addlink(groupid,post['link'],0)
             links.append(post['link'])
         except KeyError:
             pass
@@ -55,12 +91,14 @@ def feedlinks(doc):
                     matches = urlre.finditer(comment['message'])
                     if matches:
                         for match in matches:
+                            addlink(groupid,match.group(0),0)
                             links.append(match.group(0))
             else:
                 for comment in post['comments']['data']:
                     matches = urlre.finditer(comment['message'])
                     if matches:
                         for match in matches:
+                            addlink(groupid,match.group(0),0)
                             links.append(match.group(0))
         except KeyError:
             pass
@@ -73,6 +111,7 @@ parser = argparse.ArgumentParser(description='Options')
 parser.add_argument('-p', '--pages', dest='feed_pages', type=int, default=settings.feed_pages)
 parser.add_argument('-f', '--format', dest='format', default=settings.bookmark_format)
 parser.add_argument('-n', '--name', dest='name', default=settings.bookmark_title)
+parser.add_argument('-u', '--update', dest='lastupdate', default=None)
 
 args = parser.parse_args()
 
@@ -82,15 +121,16 @@ next = feedurl
 pagecount = 0
 
 links = []
+setupdb()
+addgroup(settings.fb_group_id)
 
 while True:
-    #this probably doesn't handle next returning 'data' that's empty well
     doc = json.loads(urllib2.urlopen(next).read())
     try:
         next = doc['paging']['next']
     except KeyError:
         break
-    links.extend(feedlinks(doc))
+    links.extend(feedlinks(doc, settings.fb_group_id))
     pagecount += 1
     print 'Processed page {0}'.format(pagecount)
     if pagecount >= args.feed_pages:
