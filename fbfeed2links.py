@@ -21,7 +21,7 @@ def setupdb() :
     c = conn.cursor()
 
     try:
-        c.execute('''create table if not exists lastupdate (id integer, updatetime varchar)''')
+        c.execute('''create table if not exists lastupdate (id integer, updatetime varchar, unique(id))''')
         conn.commit()
     except:
         print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
@@ -46,16 +46,27 @@ def addlink(id, url, likes):
         print "Exception on link insert"
 
 def getlastupdate(id):
-    date = ''
+    date = time.gmtime(0)
     try:
         c.execute("select updatetime from lastupdate where id={0}".format(id))
         rows = c.fetchall()
         for row in rows:
-            date = time.strptime(row['updatetime'], '%Y-%m-%dT%H:%M:%S+0000')
+            date = time.strptime(row[0], '%Y-%m-%dT%H:%M:%S+0000')
         return date
     except:
         print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
         print "Exception on lastudpate select"
+
+def setlastupdate(id,date):
+    textdate = time.strftime('%Y-%m-%dT%H:%M:%S+0000',date)
+    print 'setting new lastupdate to {0}'.format(textdate)
+    try:
+        c.execute("insert or ignore into lastupdate values (?, ?)", (id, textdate))
+        c.execute("update lastupdate set updatetime=? WHERE id=?", (textdate, id))
+        conn.commit()
+    except:
+        print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
+        print "Exception on link insert"
             
 def nsbmkhdr(name):
     hdr = u''
@@ -85,11 +96,21 @@ def nsbmkftr():
 def feedlinks(doc, groupid):
     links = []
     lastupdate = getlastupdate(groupid)
-    print lastupdate
+    newlastupdate = ''
     urlre = re.compile("http\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(/\S*)?")
     for post in doc['data']:
-        #date = time.strptime(post['updated_time'], '%Y-%m-%dT%H:%M:%S+0000')
-        #print date
+        date = time.strptime(post['updated_time'], '%Y-%m-%dT%H:%M:%S+0000')
+        if date > lastupdate:
+            if date > newlastupdate:
+                newlastupdate = date
+                print "date greater than newlastupdate, continue"
+            print "date greater that lastupdate, continue"
+        elif date <= lastupdate:
+            newlastupdate = lastupdate
+            print "date less than or equal to lastupdate, break"
+            break
+#        else:
+#            print "date equals lastupdate, break"
         try:
             matches = urlre.finditer(post['message'])
             if matches:
@@ -124,7 +145,7 @@ def feedlinks(doc, groupid):
         except KeyError:
             pass
 
-    return links
+    return links, newlastupdate
 
 feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?' + settings.fb_oauth_token
 
@@ -132,7 +153,7 @@ parser = argparse.ArgumentParser(description='Options')
 parser.add_argument('-p', '--pages', dest='feed_pages', type=int, default=settings.feed_pages)
 parser.add_argument('-f', '--format', dest='format', default=settings.bookmark_format)
 parser.add_argument('-n', '--name', dest='name', default=settings.bookmark_title)
-parser.add_argument('-u', '--update', dest='lastupdate', default=None)
+parser.add_argument('-u', '--update', dest='lastupdate', default=False)
 
 args = parser.parse_args()
 
@@ -144,6 +165,7 @@ pagecount = 0
 links = []
 setupdb()
 addgroup(settings.fb_group_id)
+newlastupdate = time.gmtime(0)
 
 while True:
     doc = json.loads(urllib2.urlopen(next).read())
@@ -151,11 +173,16 @@ while True:
         next = doc['paging']['next']
     except KeyError:
         break
-    links.extend(feedlinks(doc, settings.fb_group_id))
+    (newlinks, lastupdate) = feedlinks(doc, settings.fb_group_id)
+    links.extend(newlinks)
+    if lastupdate > newlastupdate:
+        newlastupdate = lastupdate
     pagecount += 1
     print 'Processed page {0}'.format(pagecount)
     if pagecount >= args.feed_pages:
         break
+
+setlastupdate(settings.fb_group_id,newlastupdate)
 
 ulinks = set(links)
 
