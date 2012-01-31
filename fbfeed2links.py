@@ -103,14 +103,10 @@ def feedlinks(doc, groupid):
         if date > lastupdate:
             if date > newlastupdate:
                 newlastupdate = date
-                print "date greater than newlastupdate, continue"
-            print "date greater that lastupdate, continue"
-        elif date <= lastupdate:
+        else:
             newlastupdate = lastupdate
-            print "date less than or equal to lastupdate, break"
-            break
-#        else:
-#            print "date equals lastupdate, break"
+            if args.fullupdate == False:
+                break
         try:
             matches = urlre.finditer(post['message'])
             if matches:
@@ -153,7 +149,7 @@ parser = argparse.ArgumentParser(description='Options')
 parser.add_argument('-p', '--pages', dest='feed_pages', type=int, default=settings.feed_pages)
 parser.add_argument('-f', '--format', dest='format', default=settings.bookmark_format)
 parser.add_argument('-n', '--name', dest='name', default=settings.bookmark_title)
-parser.add_argument('-u', '--update', dest='lastupdate', default=False)
+parser.add_argument('-u', '--fullupdate', dest='fullupdate', action='store_true', default=False)
 
 args = parser.parse_args()
 
