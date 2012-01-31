@@ -20,6 +20,13 @@ def setupdb() :
 
     c = conn.cursor()
 
+    try:
+        c.execute('''create table if not exists lastupdate (id integer, updatetime varchar)''')
+        conn.commit()
+    except:
+        print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
+        print "Exception on create lastupdate"
+
 def addgroup(id):
     #XXX injection problem potentially
     try:
@@ -27,7 +34,7 @@ def addgroup(id):
         conn.commit()
     except:
         print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
-        print "Exception on create links"
+        print "Exception on create group"
 
 
 def addlink(id, url, likes):
@@ -36,8 +43,20 @@ def addlink(id, url, likes):
         conn.commit()
     except:
         print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
-        print "Exception on member insert"
+        print "Exception on link insert"
 
+def getlastupdate(id):
+    date = ''
+    try:
+        c.execute("select updatetime from lastupdate where id={0}".format(id))
+        rows = c.fetchall()
+        for row in rows:
+            date = time.strptime(row['updatetime'], '%Y-%m-%dT%H:%M:%S+0000')
+        return date
+    except:
+        print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
+        print "Exception on lastudpate select"
+            
 def nsbmkhdr(name):
     hdr = u''
     hdr += '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n'
@@ -65,6 +84,8 @@ def nsbmkftr():
 
 def feedlinks(doc, groupid):
     links = []
+    lastupdate = getlastupdate(groupid)
+    print lastupdate
     urlre = re.compile("http\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(/\S*)?")
     for post in doc['data']:
         #date = time.strptime(post['updated_time'], '%Y-%m-%dT%H:%M:%S+0000')
