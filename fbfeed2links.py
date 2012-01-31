@@ -67,6 +67,18 @@ def setlastupdate(id,date):
     except:
         print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
         print "Exception on link insert"
+
+def linkdb2nsbmk(id):
+    linktext = u''
+    try:
+        c.execute("select url from fbgroup_" + id)
+        rows = c.fetchall()
+        for row in rows:
+            linktext += link2nsbmk(row[0])
+        return linktext
+    except:
+        print "Unexpected error:", sys.exc_info()[0], sys.exc_info()[1]
+        print "Exception on linkdb select"
             
 def nsbmkhdr(name):
     hdr = u''
@@ -93,31 +105,39 @@ def nsbmkftr():
 
     return ftr
 
-def feedlinks(doc, groupid):
-    links = []
+def feedlinks(doc, groupid, links):
+    data = u''
+    shortcircuit = False
     lastupdate = getlastupdate(groupid)
-    newlastupdate = ''
+    newlastupdate = time.gmtime(0)
     urlre = re.compile("http\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(/\S*)?")
     for post in doc['data']:
         date = time.strptime(post['updated_time'], '%Y-%m-%dT%H:%M:%S+0000')
+        #print 'date: {0} lastupdate: {1} newlastupdate: {2}'.format(date,lastupdate,newlastupdate)
         if date > lastupdate:
             if date > newlastupdate:
                 newlastupdate = date
         else:
-            newlastupdate = lastupdate
+            if lastupdate > newlastupdate:
+                newlastupdate = lastupdate
             if args.fullupdate == False:
+                shortcircuit = True
                 break
         try:
             matches = urlre.finditer(post['message'])
             if matches:
                 for match in matches:
+                    if match.group(0) not in links:
+                        links.add(match.group(0))
+                        data += link2nsbmk(match.group(0))
                     addlink(groupid,match.group(0),0)
-                    links.append(match.group(0))
         except KeyError:
             pass
         try:
+            if post['link'] not in links:
+                links.add(post['link'])
+                data += post['link']
             addlink(groupid,post['link'],0)
-            links.append(post['link'])
         except KeyError:
             pass
 
@@ -129,76 +149,68 @@ def feedlinks(doc, groupid):
                     matches = urlre.finditer(comment['message'])
                     if matches:
                         for match in matches:
+                            if match.group(0) not in links:
+                                links.add(match.group(0))
+                                data += link2nsbmk(match.group(0))
                             addlink(groupid,match.group(0),0)
-                            links.append(match.group(0))
             else:
                 for comment in post['comments']['data']:
                     matches = urlre.finditer(comment['message'])
                     if matches:
                         for match in matches:
+                            if match.group(0) not in links:
+                                links.add(match.group(0))
+                                data += link2nsbmk(match.group(0))
                             addlink(groupid,match.group(0),0)
-                            links.append(match.group(0))
         except KeyError:
             pass
 
-    return links, newlastupdate
+    return links, newlastupdate, data, shortcircuit
 
 feedurl = settings.fb_graph_url + '/' + settings.fb_group_id + '/' + 'feed' + '?' + settings.fb_oauth_token
 
 parser = argparse.ArgumentParser(description='Options')
-parser.add_argument('-p', '--pages', dest='feed_pages', type=int, default=settings.feed_pages)
-parser.add_argument('-f', '--format', dest='format', default=settings.bookmark_format)
 parser.add_argument('-n', '--name', dest='name', default=settings.bookmark_title)
 parser.add_argument('-u', '--fullupdate', dest='fullupdate', action='store_true', default=False)
 
 args = parser.parse_args()
 
-print 'Dumping links from {0} pages'.format(args.feed_pages)
-
 next = feedurl
 pagecount = 0
 
-links = []
+links = set()
 setupdb()
 addgroup(settings.fb_group_id)
 newlastupdate = time.gmtime(0)
 
+f = codecs.open(settings.fb_group_id + 'html', encoding='utf-8', mode='w+')
+
+f.write(nsbmkhdr(args.name))
+
+if args.fullupdate == False:
+    linktext = linkdb2nsbmk(settings.fb_group_id)
+    if linktext:
+        f.write(linktext)
+
 while True:
+    linkstext = u''
     doc = json.loads(urllib2.urlopen(next).read())
     try:
         next = doc['paging']['next']
     except KeyError:
         break
-    (newlinks, lastupdate) = feedlinks(doc, settings.fb_group_id)
-    links.extend(newlinks)
+    (newlinks, lastupdate, linkstext, shortcircuit) = feedlinks(doc, settings.fb_group_id, links)
+    f.write(linkstext)
+    links.update(newlinks)
     if lastupdate > newlastupdate:
         newlastupdate = lastupdate
     pagecount += 1
     print 'Processed page {0}'.format(pagecount)
-    if pagecount >= args.feed_pages:
+    if shortcircuit:
         break
 
 setlastupdate(settings.fb_group_id,newlastupdate)
 
-ulinks = set(links)
-
-if args.format == 'ns':
-    type = '.html'
-else:
-    type = '.txt'
-
-f = codecs.open(settings.fb_group_id + type, encoding='utf-8', mode='w+')
-
-if args.format == 'ns':
-    f.write(nsbmkhdr(args.name))
-
-for link in ulinks:
-    if args.format == 'ns':
-        f.write(link2nsbmk(link))
-    else:
-        f.write(link + '\n')
-
-if args.format == 'ns':
-    f.write(nsbmkftr())
+f.write(nsbmkftr())
 
 f.close()
